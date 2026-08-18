@@ -1,0 +1,2 @@
+- `.NET 8.0`
+- Mudança manual no projeto no `<OutputType>Exe</OutputType>` para `<OutputType>WinExe</OutputType>`
