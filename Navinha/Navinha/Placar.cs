@@ -1,7 +1,4 @@
 ﻿using Raylib_cs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 
 namespace Navinha
@@ -12,6 +9,7 @@ namespace Navinha
         private int pontosMaximo;
         private float velocidade;
         private Vector2 posicao;
+
 
         public int GetPontos()
         {
