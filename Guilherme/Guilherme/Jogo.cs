@@ -1,22 +1,30 @@
 ﻿using Raylib_cs;
 
-namespace HelloWorld;
+namespace Guilherme;
 
 internal static class Jogo
 {
+
+    public static Jogador jogador = new Jogador(0, 0);
+
+    public static void Rodar()
+    {
+        jogador.desenhar();
+    }
+
     // STAThread is required if you deploy using NativeAOT on Windows
     // See https://github.com/raylib-cs/raylib-cs/issues/301
     [System.STAThread]
     public static void Main()
     {
-        Raylib.InitWindow(800, 480, "Hello, World");
+        Raylib.InitWindow(Global.larguraTela, Global.alturaTela, "Guilherme");
 
         while (!Raylib.WindowShouldClose())
         {
             Raylib.BeginDrawing();
             Raylib.ClearBackground(Color.White);
 
-            Raylib.DrawText("Hello, world!", 12, 12, 20, Color.Black);
+            Rodar();
 
             Raylib.EndDrawing();
         }
