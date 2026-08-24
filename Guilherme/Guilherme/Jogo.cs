@@ -1,4 +1,6 @@
-﻿using Raylib_cs;
+﻿using Guilherme.Classes;
+using Guilherme.Uteis;
+using Raylib_cs;
 
 namespace Guilherme;
 
@@ -9,7 +11,6 @@ internal static class Jogo
 
     public static void Rodar()
     {
-        
         jogador.Update();
     }
 
@@ -20,16 +21,14 @@ internal static class Jogo
     {
         Raylib.InitWindow(Global.larguraTela, Global.alturaTela, "Guilherme");
 
-        Raylib.SetTargetFPS(60);
+        Raylib.SetTargetFPS(Global.FPS);
 
-        jogador = new Jogador();
-        jogador.Init();
-
+        jogador = new Jogador(Global.larguraTela / 2, (float)(Global.alturaTela * 0.8));
 
         while (!Raylib.WindowShouldClose())
         {
             Raylib.BeginDrawing();
-            Raylib.ClearBackground(Color.White);
+            Raylib.ClearBackground(Color.Blue);
 
             Rodar();
 

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Guilherme
+namespace Guilherme.Uteis
 {
     public enum EstadoJogador
     {
@@ -20,11 +20,16 @@ namespace Guilherme
         Bloqueando,
     }
 
+    public enum DirecaoMovimento
+    {
+        Esquerda,
+        Direita,
+    }
+
     public static class Global
     {
-        
-
         public static int larguraTela = 1000;
         public static int alturaTela = 800;
+        public static int FPS = 60;
     }
 }
