@@ -22,8 +22,6 @@ internal static class Jogo
 
         Raylib.SetTargetFPS(60);
 
-        bool aas = Raylib.IsTextureValid(Raylib.LoadTexture("Conteudos/SpriteSheets/Jogador.png")); 
-
         jogador = new Jogador();
         jogador.Init();
 
@@ -32,8 +30,6 @@ internal static class Jogo
         {
             Raylib.BeginDrawing();
             Raylib.ClearBackground(Color.White);
-
-            Raylib.DrawText(aas.ToString(), 0, 0, 15, Color.Blue);
 
             Rodar();
 

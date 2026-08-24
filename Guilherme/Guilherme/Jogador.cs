@@ -23,7 +23,7 @@ namespace Guilherme
             scarfy = Raylib.LoadTexture("Conteudos/SpriteSheets/Jogador.png");        // Texture loading
 
             position = new(350.0f, 280.0f);
-            frameRec = new(0.0f, 0.0f, (float)scarfy.Width / 6, (float)scarfy.Height);
+            frameRec = new(0.0f, 0.0f, (float)scarfy.Width / 94, (float)scarfy.Height);
             currentFrame = 0;
 
             framesCounter = 0;
