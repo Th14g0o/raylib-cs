@@ -7,108 +7,96 @@ namespace Guilherme
     {
         public List<EstadoJogador> estado;
 
-        public Texture2D spriteSheet = Raylib.LoadTexture("~/Conteudos/SpriteSheets/Jogador.png");
+        private Texture2D scarfy;
+        private Vector2 position;
+        private Rectangle frameRec;
+        private int currentFrame;
+        private int framesCounter;
+        private int framesSpeed;
 
-        public Rectangle framePosicionamento;
+        public const int MaxFrameSpeed = 15;
+        public const int MinFrameSpeed = 1;
 
-        public const float linha = 0;
-        public float coluna;
-        public Vector2 spriteTamanho;
-        public Vector2 spriteTamanhoPosicionamento;
-
-        public float animacaoVelocidade;
-        public float velocidadeMovimento;
-
-        public Jogador(float x, float y)
+        public void Init()
         {
-            this.estado = new List<EstadoJogador>();
-            this.estado.Add(EstadoJogador.Parado);
-            this.coluna = 0;
-            this.spriteTamanho = new Vector2(64, 64);
-            this.spriteTamanhoPosicionamento = new Vector2(100, 100);
-            this.animacaoVelocidade = 0.3f;
-            this.velocidadeMovimento = 0.3f;
-            this.framePosicionamento = new Rectangle(new Vector2(x, y), this.spriteTamanhoPosicionamento);
+            // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
+            scarfy = Raylib.LoadTexture("Conteudos/SpriteSheets/Jogador.png");        // Texture loading
+
+            position = new(350.0f, 280.0f);
+            frameRec = new(0.0f, 0.0f, (float)scarfy.Width / 6, (float)scarfy.Height);
+            currentFrame = 0;
+
+            framesCounter = 0;
+            framesSpeed = 8;            // Number of spritesheet frames shown by second
         }
 
-        public Rectangle FrameAtual()
+        public void Update()
         {
-            return new Rectangle(new Vector2(this.coluna * spriteTamanho.X, linha * spriteTamanho.Y), spriteTamanho);
-        }
+            // Update
+            //----------------------------------------------------------------------------------
+            framesCounter++;
 
-        public void Animar()
-        {
-            this.coluna += this.animacaoVelocidade;
-            if (this.estado.Contains(EstadoJogador.Parado) && this.estado.Count < 2 && (int)this.coluna > 7) this.coluna = 0;
-            else if (this.estado.Contains(EstadoJogador.Andando) && this.estado.Count < 2 && (int)this.coluna > 15) this.coluna = 8;
-            else if (this.estado.Contains(EstadoJogador.Correndo) && this.estado.Count < 2 && (int)this.coluna > 23) this.coluna = 16;
-        }
-
-        public bool AddEstado(EstadoJogador estado)
-        {
-            if (this.estado.Contains(estado)) return true;
-            else if (estado == EstadoJogador.Andando)
+            if (framesCounter >= (60 / framesSpeed))
             {
-                if (this.estado.Contains(EstadoJogador.Parado))
+                framesCounter = 0;
+                currentFrame++;
+
+                if (currentFrame > 5)
                 {
-                    this.estado.Remove(EstadoJogador.Parado);
-                    this.estado.Add(estado);
-                    return true;
+                    currentFrame = 0;
                 }
+
+                frameRec.X = (float)currentFrame * (float)scarfy.Width / 6;
             }
-            else if (estado == EstadoJogador.Parado)
+
+            if (Raylib.IsKeyPressed(KeyboardKey.Right))
             {
-                if (this.estado.Contains(EstadoJogador.Correndo) ||
-                    this.estado.Contains(EstadoJogador.Andando) ||
-                    this.estado.Contains(EstadoJogador.Agachando) ||
-                    this.estado.Contains(EstadoJogador.Caindo) ||
-                    this.estado.Contains(EstadoJogador.Atacando))
-                {
-                    this.estado.Remove(EstadoJogador.Correndo);
-                    this.estado.Remove(EstadoJogador.Andando);
-                    this.estado.Remove(EstadoJogador.Agachando);
-                    this.estado.Remove(EstadoJogador.Caindo);
-                    this.estado.Remove(EstadoJogador.Atacando);
-                    this.estado.Add(estado);
-                    return true;
-                }
+                framesSpeed++;
             }
-            return false;
-        }
-
-        public void Movimento()
-        {
-            float velocidade = 0;
-            if (this.AddEstado(EstadoJogador.Andando))
+            else if (Raylib.IsKeyPressed(KeyboardKey.Left))
             {
-                
-                if (Raylib.IsKeyDown(KeyboardKey.A) || Raylib.IsKeyDown(KeyboardKey.Left))
-                {
-                    velocidade = this.velocidadeMovimento * -1;
-                }
-                else if (Raylib.IsKeyDown(KeyboardKey.D) || Raylib.IsKeyDown(KeyboardKey.Right))
-                {
-                    velocidade += this.velocidadeMovimento;
-                }
-                this.framePosicionamento.X += velocidade;
-
+                framesSpeed--;
             }
-            if (velocidade == 0) this.AddEstado(EstadoJogador.Parado);
-            else AddEstado(EstadoJogador.Andando);
-        }
 
-        public void desenhar()
-        {
-            this.Movimento();
-            this.Animar();
-            Raylib.DrawTexturePro(
-                this.spriteSheet,
-                this.FrameAtual(),
-                this.framePosicionamento,
-                Vector2.Zero,
-                0,
-                Color.White
+            framesSpeed = Math.Clamp(framesSpeed, MinFrameSpeed, MaxFrameSpeed);
+            //----------------------------------------------------------------------------------
+
+            // Draw
+            //----------------------------------------------------------------------------------
+            Raylib.DrawTexture(scarfy, 15, 40, Color.White);
+            Raylib.DrawRectangleLines(15, 40, scarfy.Width, scarfy.Height, Color.Lime);
+            Raylib.DrawRectangleLines(
+                15 + (int)frameRec.X,
+                40 + (int)frameRec.Y,
+                (int)frameRec.Width,
+                (int)frameRec.Height,
+                Color.Red
             );
+
+            Raylib.DrawText("FRAME SPEED: ", 165, 210, 10, Color.DarkGray);
+            Raylib.DrawText($"{framesSpeed:D2} FPS", 575, 210, 10, Color.DarkGray);
+            Raylib.DrawText("PRESS RIGHT/LEFT KEYS to CHANGE SPEED!", 290, 240, 10, Color.DarkGray);
+
+            for (var i = 0; i < MaxFrameSpeed; i++)
+            {
+                if (i < framesSpeed)
+                {
+                    Raylib.DrawRectangle(250 + 21 * i, 205, 20, 20, Color.Red);
+                }
+                Raylib.DrawRectangleLines(250 + 21 * i, 205, 20, 20, Color.Maroon);
+            }
+
+            Raylib.DrawTextureRec(scarfy, frameRec, position, Color.White);  // Draw part of the texture
+
+            Raylib.DrawText("(c) Scarfy sprite by Eiden Marsal", Global.larguraTela - 200, Global.alturaTela - 20, 10, Color.Gray);
+
+            //----------------------------------------------------------------------------------
         }
+
+        public void Unload()
+        {
+            Raylib.UnloadTexture(scarfy);       // Texture unloading
+        }
+
     }
 }

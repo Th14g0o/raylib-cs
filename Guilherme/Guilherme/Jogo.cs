@@ -5,11 +5,12 @@ namespace Guilherme;
 internal static class Jogo
 {
 
-    public static Jogador jogador = new Jogador(0, 0);
+    public static Jogador jogador;
 
     public static void Rodar()
     {
-        jogador.desenhar();
+        
+        jogador.Update();
     }
 
     // STAThread is required if you deploy using NativeAOT on Windows
@@ -19,10 +20,20 @@ internal static class Jogo
     {
         Raylib.InitWindow(Global.larguraTela, Global.alturaTela, "Guilherme");
 
+        Raylib.SetTargetFPS(60);
+
+        bool aas = Raylib.IsTextureValid(Raylib.LoadTexture("Conteudos/SpriteSheets/Jogador.png")); 
+
+        jogador = new Jogador();
+        jogador.Init();
+
+
         while (!Raylib.WindowShouldClose())
         {
             Raylib.BeginDrawing();
             Raylib.ClearBackground(Color.White);
+
+            Raylib.DrawText(aas.ToString(), 0, 0, 15, Color.Blue);
 
             Rodar();
 
