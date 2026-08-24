@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Guilherme.Uteis
+﻿namespace Guilherme.Uteis
 {
     public enum EstadoJogador
     {
@@ -24,6 +18,8 @@ namespace Guilherme.Uteis
     {
         Esquerda,
         Direita,
+        Baixo,
+        Cima
     }
 
     public static class Global

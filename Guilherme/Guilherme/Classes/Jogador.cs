@@ -5,7 +5,7 @@ using System.Numerics;
 
 namespace Guilherme.Classes
 {
-    public class Jogador : SpriteColisao
+    public class Jogador : ISprite
     {
         private Texture2D spriteSheet;
         private Vector2 posicao;
@@ -20,7 +20,8 @@ namespace Guilherme.Classes
         private List<EstadoJogador> estado;
         private int velocidadeMovimento;
         private DirecaoMovimento direcao;
-        private Vector2 spriteTam;
+        public Vector2 spriteTam;
+        private int gravidadeAplicada;
 
         public Jogador(float x = 0f, float y = 0f)
         {
@@ -48,46 +49,75 @@ namespace Guilherme.Classes
 
             frameContador = 0;
             frameVelocidade = 16;
+            gravidadeAplicada = 0;
         }
 
         private void PassarFrames()
         {
-            frameContador++;
+            this.frameContador++;
 
-            if (frameContador >= Global.FPS / frameVelocidade)
+            if (this.frameContador >= Global.FPS / this.frameVelocidade)
             {
-                frameContador = 0;
-                spriteAtual++;
+                this.frameContador = 0;
+                this.spriteAtual++;
 
-                if (estado.Contains(EstadoJogador.Parado) && estado.Count < 2 && spriteAtual > 7) spriteAtual = 0;
-                else if (estado.Contains(EstadoJogador.Andando) && estado.Count < 2 && (spriteAtual > 15 || spriteAtual < 8)) spriteAtual = 8;
-                else if (estado.Contains(EstadoJogador.Correndo) && estado.Count < 2 && (spriteAtual > 23 || spriteAtual < 16)) spriteAtual = 16;
+                if (this.estado.Contains(EstadoJogador.Agachando))
+                {
+                    if (this.spriteAtual < 24) this.spriteAtual = 24;
+                    else if (this.spriteAtual > 26) this.spriteAtual = 26;
+                }
 
-                frameAtual.X = spriteAtual * frameAtual.Width;
+                if (!(!this.estado.Contains(EstadoJogador.Agachando) && spriteAtual > 26 && spriteAtual < 29))
+                {
+                    if (this.estado.Contains(EstadoJogador.Parado) && this.estado.Count < 2 && this.spriteAtual > 7) 
+                        this.spriteAtual = 0;
+                    else if (this.estado.Contains(EstadoJogador.Andando) && this.estado.Count < 2 && (this.spriteAtual > 15 || this.spriteAtual < 8)) 
+                        this.spriteAtual = 8;
+                    else if (this.estado.Contains(EstadoJogador.Correndo) && this.estado.Count < 2 && (this.spriteAtual > 23 || this.spriteAtual < 16)) 
+                        this.spriteAtual = 16;
+                }
+
+                this.frameAtual.X = this.spriteAtual * this.frameAtual.Width;
             }
 
-            frameVelocidade = Math.Clamp(frameVelocidade, frameVelocidadeMinima, frameVelocidadeMaxima);
+            this.frameVelocidade = Math.Clamp(this.frameVelocidade, frameVelocidadeMinima, frameVelocidadeMaxima);
         }
 
         private bool AddEstado(EstadoJogador estado)
         {
             if (this.estado.Contains(estado)) return true;
+            else if (estado == EstadoJogador.Agachando)
+            {
+                if (this.estado.Contains(EstadoJogador.Andando) || this.estado.Contains(EstadoJogador.Correndo) ||
+                    this.estado.Contains(EstadoJogador.Parado))
+                {
+                    this.estado.Remove(EstadoJogador.Andando);
+                    this.estado.Remove(EstadoJogador.Correndo);
+                    this.estado.Remove(EstadoJogador.Parado);
+                    this.estado.Add(estado);
+                    return true;
+                }
+            }
             else if (estado == EstadoJogador.Correndo)
             {
-                if (this.estado.Contains(EstadoJogador.Andando) || this.estado.Contains(EstadoJogador.Parado))
+                if (this.estado.Contains(EstadoJogador.Andando) || this.estado.Contains(EstadoJogador.Parado) ||
+                    this.estado.Contains(EstadoJogador.Agachando))
                 {
                     this.estado.Remove(EstadoJogador.Andando);
                     this.estado.Remove(EstadoJogador.Parado);
+                    this.estado.Remove(EstadoJogador.Agachando);
                     this.estado.Add(estado);
                     return true;
                 }
             }
             else if (estado == EstadoJogador.Andando)
             {
-                if (this.estado.Contains(EstadoJogador.Parado) || this.estado.Contains(EstadoJogador.Correndo))
+                if (this.estado.Contains(EstadoJogador.Parado) || this.estado.Contains(EstadoJogador.Correndo) ||
+                    this.estado.Contains(EstadoJogador.Agachando))
                 {
                     this.estado.Remove(EstadoJogador.Parado);
                     this.estado.Remove(EstadoJogador.Correndo);
+                    this.estado.Remove(EstadoJogador.Agachando);
                     this.estado.Add(estado);
 
                     return true;
@@ -95,16 +125,13 @@ namespace Guilherme.Classes
             }
             else if (estado == EstadoJogador.Parado)
             {
-                if (this.estado.Contains(EstadoJogador.Correndo) ||
-                    this.estado.Contains(EstadoJogador.Andando) ||
-                    this.estado.Contains(EstadoJogador.Agachando) ||
-                    this.estado.Contains(EstadoJogador.Atacando))
+                if (this.estado.Contains(EstadoJogador.Correndo) || this.estado.Contains(EstadoJogador.Andando) ||
+                    this.estado.Contains(EstadoJogador.Agachando))
                 {
                     this.estado.Remove(EstadoJogador.Correndo);
                     this.estado.Remove(EstadoJogador.Andando);
                     this.estado.Remove(EstadoJogador.Agachando);
-                    this.estado.Remove(EstadoJogador.Caindo);
-                    this.estado.Remove(EstadoJogador.Atacando);
+
                     this.estado.Add(estado);
                     return true;
                 }
@@ -117,22 +144,26 @@ namespace Guilherme.Classes
             float velocidade = 0;
             int velocidadeFator = 1;
 
-            if (Raylib.IsKeyDown(KeyboardKey.LeftShift))
+            if (Raylib.IsKeyDown(KeyboardKey.LeftShift) || Raylib.IsKeyDown(KeyboardKey.RightShift))
             {
                 AddEstado(EstadoJogador.Correndo);
                 velocidadeFator = 2;
             }
 
-            if (Raylib.IsKeyDown(KeyboardKey.A) || Raylib.IsKeyDown(KeyboardKey.Left))
+            if (Raylib.IsKeyDown(KeyboardKey.S) || Raylib.IsKeyDown(KeyboardKey.Down))
+            {
+                AddEstado(EstadoJogador.Agachando);
+            }
+            else if (Raylib.IsKeyDown(KeyboardKey.A) || Raylib.IsKeyDown(KeyboardKey.Left))
             {
                 velocidade = -velocidadeMovimento * velocidadeFator;
-                direcao = DirecaoMovimento.Esquerda;
+                this.direcao = DirecaoMovimento.Esquerda;
                 if (velocidadeFator == 1) AddEstado(EstadoJogador.Andando);
             }
             else if (Raylib.IsKeyDown(KeyboardKey.D) || Raylib.IsKeyDown(KeyboardKey.Right))
             {
                 velocidade = velocidadeMovimento * velocidadeFator;
-                direcao = DirecaoMovimento.Direita;
+                this.direcao = DirecaoMovimento.Direita;
                 if (velocidadeFator == 1) AddEstado(EstadoJogador.Andando);
             }
             else
@@ -140,25 +171,42 @@ namespace Guilherme.Classes
                 AddEstado(EstadoJogador.Parado);
             }
 
-            posicao.X += velocidade;
+            this.posicao.X += velocidade;
+        }
+
+        public Rectangle SpriteDimensionada()
+        {
+            return new Rectangle(this.posicao.X, this.posicao.Y, this.spriteTam.X, this.spriteTam.Y);
         }
 
         public Rectangle CaixaColisao()
         {
-            return new Rectangle(posicao.X, posicao.Y, spriteTam.X, spriteTam.Y);
+            Rectangle caixa = new Rectangle((int)(this.posicao.X + 45), (int)this.posicao.Y + 40, (int)(this.spriteTam.X * 0.3), (int)(this.spriteTam.Y - 70));
+            //Raylib.DrawRectangle((int)caixa.X, (int)caixa.Y, (int)caixa.Width, (int)caixa.Height, Color.Green);
+            return caixa;
         }
 
         public void Update()
         {
-            Movimentacao();
-            PassarFrames();
+            this.Gravidade();
+            this.Movimentacao();
+            this.PassarFrames();
 
             Rectangle frameExibido = frameAtual;
-            if (direcao == DirecaoMovimento.Esquerda)
+            if (this.direcao == DirecaoMovimento.Esquerda)
                 frameExibido.Width = -frameExibido.Width;
 
-            Rectangle spriteExibida = new Rectangle(posicao.X, posicao.Y, spriteTam.X, spriteTam.Y);
-            Raylib.DrawTexturePro(spriteSheet, frameExibido, spriteExibida, Vector2.Zero, 0, Color.White);
+            Raylib.DrawTexturePro(this.spriteSheet, frameExibido, this.SpriteDimensionada(), Vector2.Zero, 0, Color.White);
+        }
+
+        private void Gravidade()
+        {
+            this.posicao.Y -= this.gravidadeAplicada;
+        }
+
+        public void GravidadeAplicada(int gravidadeAplicada)
+        {
+            this.gravidadeAplicada = gravidadeAplicada;
         }
 
         private void Unload()

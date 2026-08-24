@@ -2,7 +2,7 @@
 
 namespace Guilherme.Interfaces
 {
-    public interface SpriteColisao
+    public interface ISprite
     {
         public Rectangle CaixaColisao();
         public void Update();
