@@ -1,0 +1,1 @@
+**Anotações feitas durante o processo de desenvolvimento que julgo ser interessantes**
