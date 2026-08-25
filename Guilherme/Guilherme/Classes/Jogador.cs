@@ -26,6 +26,11 @@ namespace Guilherme.Classes
             }
             return 0;
         }
+
+        public void resetar()
+        {
+            this.alturaAtual = this.velocidade;
+        }
     }
 
     public class Jogador : ISprite
@@ -46,7 +51,7 @@ namespace Guilherme.Classes
         public Vector2 spriteTam;
         private int gravidadeAplicada;
         private int velocidadeAtual = 0;
-        private Pulo pulo = new Pulo(70, 10);
+        private Pulo pulo = new Pulo(120, 5);
 
         public Jogador(float x = 0f, float y = 0f)
         {
@@ -87,12 +92,17 @@ namespace Guilherme.Classes
                 this.spriteAtual++;
 
                 if (this.estado.Contains(EstadoJogador.Agachando))
-                {
-                    if (this.spriteAtual < 24) this.spriteAtual = 24;
-                    else if (this.spriteAtual > 26) this.spriteAtual = 26;
-                }
+                    this.spriteAtual = Math.Clamp(this.spriteAtual, 24, 26);
 
-                if (!(!this.estado.Contains(EstadoJogador.Agachando) && spriteAtual > 26 && spriteAtual < 29))
+                if (this.estado.Contains(EstadoJogador.Pulando))
+                    this.spriteAtual = Math.Clamp(this.spriteAtual, 30, 33);
+
+                if (this.estado.Contains(EstadoJogador.Caindo))
+                    this.spriteAtual = Math.Clamp(this.spriteAtual, 33, 36);
+
+                if (!(!this.estado.Contains(EstadoJogador.Agachando) && spriteAtual > 26 && spriteAtual < 29) &&
+                    !this.estado.Contains(EstadoJogador.Caindo) &&
+                    !this.estado.Contains(EstadoJogador.Pulando))
                 {
                     if (this.estado.Contains(EstadoJogador.Parado) && this.estado.Count < 2 && this.spriteAtual > 7) 
                         this.spriteAtual = 0;
@@ -222,7 +232,8 @@ namespace Guilherme.Classes
             }
             else
             {
-                AddEstado(EstadoJogador.Parado);
+                if (!this.estado.Contains(EstadoJogador.Caindo) && !this.estado.Contains(EstadoJogador.Pulando)) 
+                    AddEstado(EstadoJogador.Parado);
             }
 
             this.posicao.X += this.velocidadeAtual;
@@ -273,8 +284,6 @@ namespace Guilherme.Classes
 
         private void Gravidade()
         {
-            if (this.gravidadeAplicada == 0 && this.estado.Contains(EstadoJogador.Caindo))
-                this.AddEstado(EstadoJogador.Parado);
             this.posicao.Y -= this.gravidadeAplicada;
         }
 
@@ -303,15 +312,15 @@ namespace Guilherme.Classes
 
             if (Raylib.CheckCollisionRecs(jogador, bloco))
             {
-
+                this.AddEstado(EstadoJogador.Parado);
                 Rectangle overlap = GetSobreposicao(jogador, bloco);
 
                 if (overlap.Width < overlap.Height)
                 {
                     if (jogador.X < bloco.X)
-                        this.posicao.X -= overlap.Width;
+                        this.posicao.X -= overlap.Width + this.velocidadeMovimento;
                     else
-                        this.posicao.X += overlap.Width;
+                        this.posicao.X += overlap.Width + this.velocidadeMovimento;
 
                     this.velocidadeAtual = 0;
                 }
@@ -320,6 +329,8 @@ namespace Guilherme.Classes
                     if (jogador.Y < bloco.Y)
                     {
                         this.gravidadeAplicada = 0;
+                        this.AddEstado(EstadoJogador.Parado);
+                        this.pulo.resetar();
                     }
                     else
                     {
@@ -327,6 +338,11 @@ namespace Guilherme.Classes
                         this.gravidadeAplicada = 0;
                     }
                 }
+            }
+            else
+            {
+                if (this.gravidadeAplicada != 0 && !this.estado.Contains(EstadoJogador.Pulando))
+                    this.AddEstado(EstadoJogador.Caindo);
             }
         }
 
