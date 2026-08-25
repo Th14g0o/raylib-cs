@@ -16,6 +16,7 @@
 
     public enum DirecaoMovimento
     {
+        Nenhum,
         Esquerda,
         Direita,
         Baixo,

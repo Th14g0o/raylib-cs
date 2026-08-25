@@ -5,6 +5,29 @@ using System.Numerics;
 
 namespace Guilherme.Classes
 {
+    public class Pulo
+    {
+        private int alturaMaxima;
+        private int velocidade;
+        private int alturaAtual;
+        public Pulo(int alturaMaxima, int velocidade)
+        {
+            this.alturaMaxima = alturaMaxima;
+            this.velocidade = velocidade;
+            this.alturaAtual = velocidade;
+        }
+
+        public int pular()
+        {
+            if (this.alturaAtual <= this.alturaMaxima + this.velocidade)
+            {
+                this.alturaAtual += this.velocidade;
+                return this.velocidade;
+            }
+            return 0;
+        }
+    }
+
     public class Jogador : ISprite
     {
         private Texture2D spriteSheet;
@@ -22,6 +45,8 @@ namespace Guilherme.Classes
         private DirecaoMovimento direcao;
         public Vector2 spriteTam;
         private int gravidadeAplicada;
+        private int velocidadeAtual = 0;
+        private Pulo pulo = new Pulo(70, 10);
 
         public Jogador(float x = 0f, float y = 0f)
         {
@@ -38,7 +63,7 @@ namespace Guilherme.Classes
         {
             spriteSheet = Raylib.LoadTexture("Conteudos/SpriteSheets/Jogador.png");
             estado = new List<EstadoJogador>();
-            estado.Add(EstadoJogador.Parado);
+            estado.Add(EstadoJogador.Caindo);
             direcao = DirecaoMovimento.Direita;
             spriteTam = new Vector2(128, 128);
             velocidadeMovimento = 5;
@@ -86,6 +111,31 @@ namespace Guilherme.Classes
         private bool AddEstado(EstadoJogador estado)
         {
             if (this.estado.Contains(estado)) return true;
+            else if (estado == EstadoJogador.Pulando)
+            {
+                if (this.estado.Contains(EstadoJogador.Andando) || this.estado.Contains(EstadoJogador.Correndo) ||
+                    this.estado.Contains(EstadoJogador.Parado))
+                {
+                    this.estado.Remove(EstadoJogador.Andando);
+                    this.estado.Remove(EstadoJogador.Correndo);
+                    this.estado.Remove(EstadoJogador.Parado);
+                    this.estado.Add(estado);
+                    return true;
+                }
+            }
+            else if (estado == EstadoJogador.Caindo)
+            {
+                if (this.estado.Contains(EstadoJogador.Andando) || this.estado.Contains(EstadoJogador.Correndo) ||
+                    this.estado.Contains(EstadoJogador.Parado) || this.estado.Contains(EstadoJogador.Pulando))
+                {
+                    this.estado.Remove(EstadoJogador.Andando);
+                    this.estado.Remove(EstadoJogador.Correndo);
+                    this.estado.Remove(EstadoJogador.Parado);
+                    this.estado.Remove(EstadoJogador.Pulando);
+                    this.estado.Add(estado);
+                    return true;
+                }
+            }
             else if (estado == EstadoJogador.Agachando)
             {
                 if (this.estado.Contains(EstadoJogador.Andando) || this.estado.Contains(EstadoJogador.Correndo) ||
@@ -126,11 +176,12 @@ namespace Guilherme.Classes
             else if (estado == EstadoJogador.Parado)
             {
                 if (this.estado.Contains(EstadoJogador.Correndo) || this.estado.Contains(EstadoJogador.Andando) ||
-                    this.estado.Contains(EstadoJogador.Agachando))
+                    this.estado.Contains(EstadoJogador.Agachando) || this.estado.Contains(EstadoJogador.Caindo))
                 {
                     this.estado.Remove(EstadoJogador.Correndo);
                     this.estado.Remove(EstadoJogador.Andando);
                     this.estado.Remove(EstadoJogador.Agachando);
+                    this.estado.Remove(EstadoJogador.Caindo);
 
                     this.estado.Add(estado);
                     return true;
@@ -141,7 +192,10 @@ namespace Guilherme.Classes
 
         private void Movimentacao()
         {
-            float velocidade = 0;
+            if (Raylib.IsKeyDown(KeyboardKey.Space))
+                this.Pular();
+
+            this.velocidadeAtual = 0;
             int velocidadeFator = 1;
 
             if (Raylib.IsKeyDown(KeyboardKey.LeftShift) || Raylib.IsKeyDown(KeyboardKey.RightShift))
@@ -156,13 +210,13 @@ namespace Guilherme.Classes
             }
             else if (Raylib.IsKeyDown(KeyboardKey.A) || Raylib.IsKeyDown(KeyboardKey.Left))
             {
-                velocidade = -velocidadeMovimento * velocidadeFator;
+                this.velocidadeAtual = -velocidadeMovimento * velocidadeFator;
                 this.direcao = DirecaoMovimento.Esquerda;
                 if (velocidadeFator == 1) AddEstado(EstadoJogador.Andando);
             }
             else if (Raylib.IsKeyDown(KeyboardKey.D) || Raylib.IsKeyDown(KeyboardKey.Right))
             {
-                velocidade = velocidadeMovimento * velocidadeFator;
+                this.velocidadeAtual = velocidadeMovimento * velocidadeFator;
                 this.direcao = DirecaoMovimento.Direita;
                 if (velocidadeFator == 1) AddEstado(EstadoJogador.Andando);
             }
@@ -171,7 +225,24 @@ namespace Guilherme.Classes
                 AddEstado(EstadoJogador.Parado);
             }
 
-            this.posicao.X += velocidade;
+            this.posicao.X += this.velocidadeAtual;
+        }
+
+        public void Pular()
+        {
+            if (!this.estado.Contains(EstadoJogador.Pulando) && !this.estado.Contains(EstadoJogador.Caindo))
+                AddEstado(EstadoJogador.Pulando);
+        }
+
+        public void Pulo()
+        {
+            if (this.estado.Contains(EstadoJogador.Pulando))
+            {
+                this.gravidadeAplicada = this.pulo.pular();
+                gravidadeAplicada += this.gravidadeAplicada;
+                if (this.gravidadeAplicada == 0)
+                    AddEstado(EstadoJogador.Caindo);
+            }
         }
 
         public Rectangle SpriteDimensionada()
@@ -188,6 +259,7 @@ namespace Guilherme.Classes
 
         public void Update()
         {
+            if (this.estado.Contains(EstadoJogador.Pulando) || this.estado.Contains(EstadoJogador.Caindo)) this.Pulo();
             this.Gravidade();
             this.Movimentacao();
             this.PassarFrames();
@@ -201,12 +273,61 @@ namespace Guilherme.Classes
 
         private void Gravidade()
         {
+            if (this.gravidadeAplicada == 0 && this.estado.Contains(EstadoJogador.Caindo))
+                this.AddEstado(EstadoJogador.Parado);
             this.posicao.Y -= this.gravidadeAplicada;
         }
 
         public void GravidadeAplicada(int gravidadeAplicada)
         {
             this.gravidadeAplicada = gravidadeAplicada;
+        }
+
+        private Rectangle GetSobreposicao(Rectangle a, Rectangle b) 
+        {
+            float x = Math.Max(a.X, b.X);
+
+            float y = Math.Max(a.Y, b.Y);
+
+            float z = Math.Min(a.X + a.Width, b.X + b.Width);
+
+            float w = Math.Min(a.Y + a.Height, b.Y + b.Height);
+
+            return new Rectangle( x, y, z - x, w - y);
+        }
+
+        public void VerificaColisao(ISprite sprite)
+        {
+            Rectangle jogador = this.CaixaColisao();
+            Rectangle bloco = sprite.CaixaColisao();
+
+            if (Raylib.CheckCollisionRecs(jogador, bloco))
+            {
+
+                Rectangle overlap = GetSobreposicao(jogador, bloco);
+
+                if (overlap.Width < overlap.Height)
+                {
+                    if (jogador.X < bloco.X)
+                        this.posicao.X -= overlap.Width;
+                    else
+                        this.posicao.X += overlap.Width;
+
+                    this.velocidadeAtual = 0;
+                }
+                else
+                {
+                    if (jogador.Y < bloco.Y)
+                    {
+                        this.gravidadeAplicada = 0;
+                    }
+                    else
+                    {
+                        this.posicao.Y += overlap.Height;
+                        this.gravidadeAplicada = 0;
+                    }
+                }
+            }
         }
 
         private void Unload()

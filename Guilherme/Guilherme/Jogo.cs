@@ -13,14 +13,13 @@ internal static class Jogo
 
     public static void Rodar()
     {
-        int gravidadeAplicada = gravidade;
+        jogador.GravidadeAplicada(gravidade);
         foreach (ISprite sprite in sprites) 
         {
             sprite.Update();
-            if (Raylib.CheckCollisionRecs(sprite.CaixaColisao(), jogador.CaixaColisao())) 
-                gravidadeAplicada = gravidadeAplicada - gravidadeAplicada;
+            jogador.VerificaColisao(sprite);
         }
-        jogador.GravidadeAplicada(gravidadeAplicada);
+  
         jogador.Update();
     }
 
@@ -36,6 +35,18 @@ internal static class Jogo
             sprites.Add(a);
             sprites.Add(b);
 
+        }
+
+        for (int i = 0; i < 4; i++)
+        {
+            int tamX = 150;
+            int tamY = 50;
+            if (i % 2 == 0){
+                CorpoFisico a = new CorpoFisico(tamX * i, (int)(Global.alturaTela * 0.4 + jogador.spriteTam.Y - tamY / 2), tamX, tamY / 2, Color.Green);
+                CorpoFisico b = new CorpoFisico(tamX * i, (int)(Global.alturaTela * 0.4 + jogador.spriteTam.Y), tamX, tamY, Color.DarkBrown);
+                sprites.Add(a);
+                sprites.Add(b);
+            }
         }
     }
 
